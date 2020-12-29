@@ -1,0 +1,14 @@
+﻿R e a d m e
+-----------
+
+Simple script, that will copy sorter settings from 'master' to all 'slaves'.
+
+How to use: 
+1. Specify 'master' sorter by adding [MASTER] tag to its name (can be only one).
+2. Specify 'slave' sorters by adding [SLAVE] tag to theyr names (must be on same grid as master).
+3. Configure 'master' sorter 
+4. Run this script in programable block on same grid as sorters.
+5. ???
+6. Profit!
+
+NOTE: [MASTER] and [SLAVE] tags can be changed at beginning of this script.

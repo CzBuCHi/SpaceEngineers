@@ -1,0 +1,32 @@
+﻿Modified version of 'PROJECTOR CONTROL with Mouse and Keyboard' by 00Fant
+
+used in 'ISL - Small Ship Printer Basic MK 3' 
+
+https://steamcommunity.com/sharedfiles/filedetails/?id=1967085548
+_______________________________________________________________________
+	
+First you need 1 Cockpit (or Remote Control) with {CONTROLLER_TAG} in Name,
+
+then a Projector on the same Grid or Subgrid with {PROJECTOR_TAG} in Name,
+
+then optionaly display (any block with displays will do) with {DISPLAY_REMAINING_TAG} 
+or {DISPLAY_OFFSET_TAG} in Name 
+(display will show projector remaining blocks or current offset and rotation)
+
+Note: if 'display' block has more than one surface specify surface index in blocks CustomData 
+in format '{SURFACE_INDEX_PREFIX}SURFACE_INDEX' - for Ex: '{SURFACE_INDEX_PREFIX}:1' otherwise
+first display wil be used.
+
+then turn you Programmable block with this script loaded on.
+load a Blueprint. finish.
+
+
+Controls:
+W, A, S, D, Space, Shift ( default controls ) = Move the Projection
+Arrowkeys or Mouse + Roll Keys ( Q / E ) = Rotate the Projection
+	
+i use the Arrowkeys to rotate. it is better i think. 
+
+
+The X and Z vectors can be swapped by running script with 'swap' argument
+(so that they can be intuitively controlled from the control chair).
