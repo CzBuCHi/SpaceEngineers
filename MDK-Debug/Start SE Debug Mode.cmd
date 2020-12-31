@@ -1,0 +1,1 @@
+"C:\Program Files (x86)\Steam\steam.exe" -applaunch 244850 -plugin "%CD%\bin\Debug\net461\MDK-Debug.dll"

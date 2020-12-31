@@ -1,0 +1,54 @@
+﻿R e a d m e
+-----------
+
+Script for batch renaming blocks.
+
+How to use:
+
+1. Create group of blocks which you need to rename
+2. Run this script on same grid as created group with argument [Group Name];[Formating string]
+
+Formating script options:
+
+If first character of formating string is '?' then script will only outputs 
+(original name -> new name) and do not perform renaming.
+
+[G] Grid name
+[G#] #-th character from grid name
+[G#-] Substring of grid name starting at # position
+[G#1-#2] Substring of grid name starting at #1 and ending at #2
+
+[N] Block name
+[N#] #-th character from block name
+[N#-] Substring of block name starting at # position
+[N#1-#2] Substring of block name starting at #1 and ending at #2
+
+[C] counter
+[C#] counter starting at #
+[C-#] counter with min # characters (aka 001, 002 for #=3)
+[C#1-#2] counter starting at #1 counter with min #2 characters
+
+[[] character '['
+[]] character ']'
+
+Example:
+
+Grid Name: "Fred Flintstone"
+Formating string:  "GROUP;[G6-] - [N19-26] [C-2]"
+Blocks: (original name -> new name)
+
+"Too short name"                -> "Flintstone - 01"
+"Large Atmospheric Thruster"    -> "Flintstone - Thruster 02"
+"Large Atmospheric Thruster 2"  -> "Flintstone - Thruster 03"
+"Large Atmospheric Thruster 3"  -> "Flintstone - Thruster 04"
+"Small Atmospheric Thruster"    -> "Flintstone - Thruster 05"
+"Small Atmospheric Thruster 2"  -> "Flintstone - Thruster 06"
+"Small Atmospheric Thruster 3"  -> "Flintstone - Thruster 07"
+
+
+
+
+
+
+
+

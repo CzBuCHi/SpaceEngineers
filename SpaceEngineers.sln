@@ -16,6 +16,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BatchRename", "BatchRename\BatchRename.csproj", "{AD22E501-CC03-4796-8101-AAD6808BF11D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -27,6 +29,8 @@ Global
 		{C884D205-11A6-4C17-842F-01949FCEDF72}.Debug|x64.Build.0 = Debug|x64
 		{35D349FB-ADF8-446F-B4CE-F9150BAC77A2}.Debug|x64.ActiveCfg = Debug|x64
 		{35D349FB-ADF8-446F-B4CE-F9150BAC77A2}.Debug|x64.Build.0 = Debug|x64
+		{AD22E501-CC03-4796-8101-AAD6808BF11D}.Debug|x64.ActiveCfg = Debug|x64
+		{AD22E501-CC03-4796-8101-AAD6808BF11D}.Debug|x64.Build.0 = Debug|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
