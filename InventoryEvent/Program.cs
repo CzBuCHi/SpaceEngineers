@@ -19,11 +19,13 @@ namespace IngameScript {
         // (Used if command uses (not)equal operator)
         private const float TOLERANCE = 0.001f;
 
-        // Prefix for command in CustomData field.
-        private const string COMMAND_PREFIX = "INV:";
-
         // Prefix before display index in 'display' block
         private const string SURFACE_INDEX_PREFIX = "INVENTORY:";
+
+        // Prefix and suffix for configuration in custom data
+        private const string CONFIG_START_PREFIX = @"[Inventory:";
+        private const string CONFIG_END_PREFIX = @"[/Inventory:";
+        private const string CONFIG_SUFFIX = @"]";
 
         // End of configuration
         ////////////////////////////////////////////////////////////
@@ -39,14 +41,13 @@ namespace IngameScript {
                 IMyTextSurfaceProvider provider = block as IMyTextSurfaceProvider;
                 if (provider != null) {
                     int surfaceIndex = GetTextSurfaceIndex(block);
-                    _Displays.Add(provider.GetSurface(surfaceIndex));
+                    IMyTextSurface surface = provider.GetSurface(surfaceIndex);
+                    surface.ContentType = ContentType.TEXT_AND_IMAGE;
+                    _Displays.Add(surface);
                 } else {
                     Echo("Cannot use block '" + block.CustomName + "' as display.");
                 }
             }
-
-            List<IMyTerminalBlock> blocks = new List<IMyTerminalBlock>();
-            GridTerminalSystem.GetBlocks(blocks);
 
             IEnumerable<KeyValuePair<string, List<IMyTerminalBlock>>> groups = ResolveGroups();
 
@@ -64,8 +65,9 @@ namespace IngameScript {
 
             Runtime.UpdateFrequency = UpdateFrequency.Update10;
         }
-        
-        public void Main(string argument, UpdateType updateSource) {
+
+        // ReSharper disable once UnusedMember.Global
+        public void Main( /*string argument, UpdateType updateSource*/) {
             foreach (IMyTextSurface display in _Displays) {
                 display.WriteText("InventoryEvent 1.0 status:\n\n");
             }
@@ -145,14 +147,90 @@ namespace IngameScript {
             return dict;
         }
 
-        private string GetGroupName(string blockOrGroupName) {
+        private Group ResolveGroupManager(string groupName, List<IMyTerminalBlock> blocks) {
+            List<IMyTerminalBlock> cargo = new List<IMyTerminalBlock>();
+            List<IMyTextSurface> displays = new List<IMyTextSurface>();
+            List<Command> commands = new List<Command>();
+
+            foreach (IMyTerminalBlock block in blocks) {
+                Echo("Processing block '" + block.CustomName + "' ...");
+                if (block.HasInventory) {
+                    cargo.Add(block);
+                }
+
+                IMyTextSurface surface = block as IMyTextSurface;
+                if (surface != null) {
+                    surface.ContentType = ContentType.TEXT_AND_IMAGE;
+                    displays.Add(surface);
+                }
+
+                bool foundConfig = false;
+                // ReSharper disable once StringIndexOfIsCultureSpecific.1
+                int start = block.CustomData.IndexOf(CONFIG_START_PREFIX + groupName + CONFIG_SUFFIX);
+                if (start != -1) {
+                    // ReSharper disable once StringIndexOfIsCultureSpecific.1
+                    int end = block.CustomData.IndexOf(CONFIG_END_PREFIX + groupName + CONFIG_SUFFIX);
+                    if (end != -1) {
+                        string configLines = block.CustomData.Substring(start, end - start);
+                        foundConfig = true;
+
+                        foreach (string line in configLines.Split('\n')) {
+                            if (line.TrimStart().StartsWith(";")) {
+                                continue;
+                            }
+
+                            int index = line.IndexOf(';');
+                            string commandConfig = (index != -1 ? line.Substring(0, index - 1) : line).Trim();
+
+                            try {
+                                commands.Add(ParseCommand(block, commandConfig));
+                                Echo("Successfully parsed command '" + line + "' on block '" + block.CustomName + "'.");
+                            } catch (Exception e) {
+                                Echo("Warning: Unable to parse command '" + line + "' on block '" + block.CustomName + "'. Ignoring. (Error message: '" + e.Message + "'");
+                            }
+                        }
+                    }
+                }
+
+                if (!foundConfig) {
+                    Echo("Adding list of commands into '" + block.CustomName + "' CustomData.");
+
+                    List<ITerminalAction> actions = new List<ITerminalAction>();
+                    block.GetActions(actions);
+
+                    IEnumerable<string> lines = actions.Select(o => o.Id + " (" + o.Name + ")");
+                    block.CustomData += "\n\n[Inventory:" + groupName + "]\n" +
+                                        string.Join("\n; ", lines) + "\n" +
+                                        "[/Inventory:" + groupName + "]";
+                }
+            }
+
+            if (cargo.Count == 0) {
+                Echo("Warning: Group " + groupName + " has no cargo. Ignoring.");
+                return null;
+            }
+
+            return new Group {
+                GroupName = groupName,
+                Cargo = cargo,
+                Displays = displays,
+                Commands = commands
+            };
+        }
+
+        private static string GetGroupName(string blockOrGroupName) {
+            // ReSharper disable once StringIndexOfIsCultureSpecific.1
             int start = blockOrGroupName.IndexOf(GROUP_PREFIX) + GROUP_PREFIX.Length;
+            // ReSharper disable once StringIndexOfIsCultureSpecific.2
             int end = blockOrGroupName.IndexOf(GROUP_SUFFIX, start);
             return blockOrGroupName.Substring(start, end - start);
         }
 
-        private Command ParseCommand(IMyTerminalBlock block, string configuration) {
-            string[] tokens = configuration.Split(' ');
+        private static Command ParseCommand(IMyTerminalBlock block, string configuration) {
+            string[] tokens = configuration.Split(new[] {' '}, StringSplitOptions.RemoveEmptyEntries);
+            if (tokens.Length != 3) {
+                throw new Exception("Invalid command syntax.");
+            }
 
             string volume = tokens[2];
             bool percents = volume.EndsWith("%");
@@ -173,12 +251,11 @@ namespace IngameScript {
 
             return new Command {
                 CanExecute = canExecute,
-                Execute = () => block.GetActionWithName(tokens[0]).Apply(block),
-                Config = configuration
+                Execute = () => block.GetActionWithName(tokens[0]).Apply(block)
             };
         }
 
-        private Func<float, float, bool> GetOperatorFunction(string @operator) {
+        private static Func<float, float, bool> GetOperatorFunction(string @operator) {
             switch (@operator) {
                 case "=":
                 case "==":
@@ -199,79 +276,9 @@ namespace IngameScript {
             }
         }
 
-        private void WriteCustomData(IMyTerminalBlock block) {
-            if (block.CustomData.Contains("InventoryEvent 1.0")) {
-                return;
-            }
-            
-            Echo("Adding list of commands into '" + block.CustomName + "' CustomData.");
-            List<ITerminalAction> actions = new List<ITerminalAction>();
-            block.GetActions(actions);
-            IEnumerable<string> lines = actions.Select(o => o.Id + " (" + o.Name + ")");
-            block.CustomData += "\n\nInventoryEvent 1.0\n"+
-                                "=============================\n"+
-                                "Write commands on separate line in this format: '" + COMMAND_PREFIX + "COMMAND_NAME OPERATOR VALUE'\n" +
-                               "Recognized operators are: '=', '==', '!=', '<>', '>', '>=', '<' and '<='\n" +
-                               "Value can be absolute (42) or in percents (42%).\n" +
-                               "Command example: '" + COMMAND_PREFIX + "OnOff_On < 10%'  (Turns this block on when total amount is less than 10%)\n" +
-                               "List of all available commands valid for this block:\n\n " + string.Join("\n ", lines);
-        }
-
-        private Group ResolveGroupManager(string groupName, List<IMyTerminalBlock> blocks) {
-            List<IMyTerminalBlock> cargo = new List<IMyTerminalBlock>();
-            List<IMyTextSurface> displays = new List<IMyTextSurface>();
-            List<Command> commands = new List<Command>();
-
-            foreach (IMyTerminalBlock block in blocks) {
-                Echo("Processing block '" + block.CustomName + "' ...");
-                if (block.HasInventory) {
-                    cargo.Add(block);
-                }
-
-                IMyTextSurface surface = block as IMyTextSurface;
-                if (surface != null) {
-                    surface.ContentType = ContentType.TEXT_AND_IMAGE;
-                    displays.Add(surface);
-                }
-
-                bool foundCommand = false;
-                foreach (string line in block.CustomData.Split('\n')) {
-                    if (!line.StartsWith(COMMAND_PREFIX)) {
-                        continue;
-                    }
-
-                    try {
-                        commands.Add(ParseCommand(block, line.Substring(COMMAND_PREFIX.Length)));
-
-                        Echo("Successfully parsed command '" + line + "' on block '" + block.CustomName + "'.");
-                        foundCommand = true;
-                    } catch (Exception e) {
-                        Echo("Warning: Unable to parse command '" + line + "' on block '" + block.CustomName + "'. Ignoring. (Error message: '" + e.Message + "'");
-                    }
-                }
-
-                if (!foundCommand) {
-                    WriteCustomData(block);
-                }
-            }
-
-            if (cargo.Count == 0) {
-                Echo("Warning: Group " + groupName + " has no cargo. Ignoring.");
-                return null;
-            }
-
-            return new Group {
-                GroupName = groupName,
-                Cargo = cargo,
-                Displays = displays,
-                Commands = commands
-            };
-        }
-
-        private void CalcVolumes(Group group) {
+        private static void CalcVolumes(Group group) {
             group.TotalVolume = 0;
             group.UsedVolume = 0;
-
             foreach (IMyTerminalBlock block in group.Cargo) {
                 for (int i = 0; i < block.InventoryCount; i++) {
                     IMyInventory inv = block.GetInventory(i);
@@ -281,10 +288,9 @@ namespace IngameScript {
             }
         }
 
-        private void ProcessCommands(Group group) {
+        private static void ProcessCommands(Group group) {
             foreach (Command command in group.Commands) {
                 bool canExecute = command.CanExecute(group);
-
                 if (canExecute && !command.Executed) {
                     command.Execute();
                     command.Executed = true;
@@ -294,7 +300,7 @@ namespace IngameScript {
             }
         }
 
-        private void UpdateDisplay(IMyTextSurface surface, Group group, bool append = false) {
+        private static void UpdateDisplay(IMyTextSurface surface, Group group, bool append = false) {
             surface.WriteText(
                 group.GroupName + ": " +
                 group.UsedVolume.ToString("N3") + "L of " +
@@ -314,7 +320,6 @@ namespace IngameScript {
 
         private class Command {
             public Func<Group, bool> CanExecute;
-            public string Config;
             public Action Execute;
             public bool Executed;
         }

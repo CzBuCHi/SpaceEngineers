@@ -11,7 +11,7 @@ How to use:
 Formating script options:
 
 If first character of formating string is '?' then script will only outputs 
-(original name -> new name) and do not perform renaming.
+(original name -> new name) to screen and do not perform renaming.
 
 [G] Grid name
 [G#] #-th character from grid name
@@ -44,11 +44,3 @@ Blocks: (original name -> new name)
 "Small Atmospheric Thruster"    -> "Flintstone - Thruster 05"
 "Small Atmospheric Thruster 2"  -> "Flintstone - Thruster 06"
 "Small Atmospheric Thruster 3"  -> "Flintstone - Thruster 07"
-
-
-
-
-
-
-
-

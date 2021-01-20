@@ -62,13 +62,15 @@ namespace IngameScript {
                 }
 
                 _MyTextSurface.WriteText("\n" + oldName + " -> " + newName, true);
+								
                 if (!preview) {
-                    block.CustomName = newName;
+                    Echo("Renaming " + oldName + " to " + newName);
+                    block.CustomName = newNames[block];
                 }
             }
 
             if (!preview) {
-                _MyTextSurface.WriteText("\n\nRename operation complete.\nWaiting for next job...");
+                _MyTextSurface.WriteText("\n\nRename operation complete.\nWaiting for next job...", true);
             }
         }
 

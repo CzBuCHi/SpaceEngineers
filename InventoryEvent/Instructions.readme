@@ -5,8 +5,22 @@ Simple script, that will trigger block action based on cargo capacity.
 
 How to use:
 
-1) Name all the blocks that the script should use so in include GROUP_PREFIX and GROUP_SUFFIX
+1a) Make block group with name that incudes GROUP_PREFIX and GROUP_SUFFIX
+1b) Alternatively name all blocks that the script should use so in include GROUP_PREFIX and GROUP_SUFFIX
 2) Recompile this script (script will populate CustomData with all awailable commands related to block)
 3) Set the action in the CustomData item of each block
 4) Recompile this script again so its read your changes in CustomData
 
+Custom data commands:
+
+- only lines between [Inventory:GROUP_NAME] and [/Inventory:GROUP_NAME] are procesed by command parser
+- lines starting with ';' are ignored
+- command syntax: 'COMMAND_NAME OPERATOR VALUE ; optional comment'
+
+COMMAND_NAME: any valid block action
+OPERATOR: one of these: '=', '==', '!=', '<>', '>', '>=', '<' and '<='
+VALUE: can be absolute or in percents
+
+Command example: 
+'OnOff_On < 10%' ; Turns this block on when total amount is less than 10%)
+'OnOff_Off < 10' ; Turns this block off when total amount is less than 10L)
