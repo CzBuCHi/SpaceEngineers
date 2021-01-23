@@ -174,8 +174,8 @@ namespace IngameScript {
                         string configLines = block.CustomData.Substring(start, end - start);
                         foundConfig = true;
 
-                        foreach (string line in configLines.Split('\n')) {
-                            if (line.TrimStart().StartsWith(";")) {
+                        foreach (string line in configLines.Split('\n').Skip(1)) {
+                            if ( string.IsNullOrEmpty(line) || line.TrimStart().StartsWith(";")) {
                                 continue;
                             }
 
